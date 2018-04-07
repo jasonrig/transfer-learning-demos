@@ -158,10 +158,7 @@ def maybe_download_pretrained_model(model_name, target_file=None, download_dir_t
             logger.error("An error was encountered while extracting the checkpoint file: %s" % e)
             raise
 
-    if os.path.isfile(ckpt_destination):
-        logger.debug("Cleaning up downloaded tar file.")
-        os.remove(tar_destination)
-        return ckpt_destination
-    else:
-        raise RuntimeError(
-            "Unable to find pretrained parameters for %s; expected checkpoint file was not available in the downloaded archive." % model_name)
+    logger.debug("Cleaning up downloaded tar file.")
+    os.remove(tar_destination)
+
+    return ckpt_destination
