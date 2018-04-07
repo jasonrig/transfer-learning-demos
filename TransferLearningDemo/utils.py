@@ -141,20 +141,23 @@ def maybe_download_pretrained_model(model_name, target_file=None, download_dir_t
     logger.debug("Archive successfully downloaded. Decompressing...")
 
     with tarfile.open(tar_destination) as tar:
-        for item in tar.getnames():
-            if item.endswith(".ckpt"):
-                logger.debug("Found checkpoint file: %s" % item)
-                try:
-                    tar.extract(item, destination_dir)
-                    extract_location = os.path.join(destination_dir, item)
-                    assert os.path.isfile(
-                        extract_location), "Expected checkpoint to be extracted as %s, but it wasn't." % extract_location
-                    os.rename(extract_location, ckpt_destination)
-                    logger.debug("Checkpoint file %s extracted to %s successfully" % (item, ckpt_destination))
-                    break
-                except tarfile.TarError as e:
-                    logger.error("An error was encountered while extracting the checkpoint file: %s" % e)
-                    raise
+        ckpt_file_in_tar = [item for item in tar.getnames() if item.endswith(".ckpt")]
+
+        assert len(ckpt_file_in_tar) == 1, "Expected to find only one checkpoint file in %s but found %i" % (
+        tar_destination, len(ckpt_file_in_tar))
+
+        ckpt_file_in_tar = ckpt_file_in_tar[0]
+        try:
+            tar.extract(ckpt_file_in_tar, destination_dir)
+            extract_location = os.path.join(destination_dir, ckpt_file_in_tar)
+            assert os.path.isfile(
+                extract_location), "Expected checkpoint to be extracted as %s, but it wasn't." % extract_location
+            os.rename(extract_location, ckpt_destination)
+            logger.debug("Checkpoint file %s extracted to %s successfully" % (ckpt_file_in_tar, ckpt_destination))
+        except tarfile.TarError as e:
+            logger.error("An error was encountered while extracting the checkpoint file: %s" % e)
+            raise
+
     if os.path.isfile(ckpt_destination):
         logger.debug("Cleaning up downloaded tar file.")
         os.remove(tar_destination)
