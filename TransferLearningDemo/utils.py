@@ -25,7 +25,7 @@ def get_dirs():
     :return: a dictionary of application paths
     """
     dirs = AppDirs(APP_NAME, APP_AUTHOR)
-    dir_types = [dir_type for dir_type in dir(dirs) if dir_type.endswith("_dir")]
+    dir_types = [dir_type for dir_type in dir(dirs) if dir_type.endswith("_cache_dir")]
     created_dirs = {}
     for dir_type in dir_types:
         new_dir = getattr(dirs, dir_type)
@@ -84,7 +84,7 @@ def pretrained_model_urls():
     return dict(models)
 
 
-def maybe_download_pretrained_model(model_name, target_file=None, download_dir_type='user_cache_dir'):
+def get_model_checkpoint(model_name, target_file=None, download_dir_type='user_cache_dir'):
     """
     Returns a path to the TensorFlow checkpoint file containing pretrained parameters for the given model. This might
     involve downloading the tar file or it could be available in the cache.
@@ -121,20 +121,8 @@ def maybe_download_pretrained_model(model_name, target_file=None, download_dir_t
 
     logger.warning("No pretrained parameters were found on disk. Attempting to download from %s" % model_url)
     destination_dir = dirs[download_dir_type]
-    tar_destination = os.path.join(destination_dir, source_file)
     ckpt_destination = os.path.join(destination_dir, target_file)
-    if not os.path.isfile(tar_destination):
-        try:
-            urlretrieve(model_url, tar_destination)
-        except URLError as e:
-            logger.error("Could not download pretrained parameters for %s: %s" % (model_name, e))
-            try:
-                os.remove(tar_destination)
-            except FileNotFoundError:
-                pass
-            raise
-    else:
-        logger.debug("Tar file already exists - no need to download.")
+    tar_destination = maybe_download(model_url, destination_dir, source_file)
 
     assert os.path.isfile(tar_destination), "Expected %s to exist but could not be found" % tar_destination
 
@@ -159,6 +147,49 @@ def maybe_download_pretrained_model(model_name, target_file=None, download_dir_t
             raise
 
     logger.debug("Cleaning up downloaded tar file.")
-    os.remove(tar_destination)
+    delete_file_safely(tar_destination)
 
     return ckpt_destination
+
+
+def maybe_download(url, destination_dir=None, target_file_name=None, invalidate_cache=False):
+    """
+    Downloads a file from the given URL or returns a cached version
+    :param url: URL from which to download the file
+    :param destination_dir: directory to which the file should be downloaded, defaults to user_cache_dir
+    :param target_file_name: the name given to the downloaded file
+    :return: path to the downloaded file
+    """
+    destination_dir = destination_dir or get_dirs()['user_cache_dir']
+    target_file_name = target_file_name or target_file_name.split("/")[-1]
+    file_path = os.path.join(destination_dir, target_file_name)
+
+    if invalidate_cache:
+        delete_file_safely(file_path)
+
+    if not os.path.isfile(file_path):
+        try:
+            urlretrieve(url, file_path)
+        except URLError as e:
+            logger.error("Could not download file from %s: %s" % (url, e))
+            delete_file_safely(file_path)
+            raise
+    else:
+        logger.debug("File already exists - no need to download.")
+    return file_path
+
+
+def delete_file_safely(file_path, raise_exception_if_not_found=False):
+    """
+    Deletes a file only if it resides in any of the app directories
+    :param file_path: path to file to delete
+    :param raise_exception_if_not_found: if False, silently fails if file doesn't exist
+    """
+    in_path = any([os.path.abspath(file_path).startswith(d) for d in get_dirs().values()])
+    assert in_path, "Expected file %s to be in one of %s but it wasn't." % (file_path, ', '.join(get_dirs().values()))
+    assert not os.path.isdir(file_path), "Expected `file_path` to be a file, but found a directory instead."
+    try:
+        os.remove(file_path)
+    except FileNotFoundError:
+        if raise_exception_if_not_found:
+            raise
