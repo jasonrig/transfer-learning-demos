@@ -155,6 +155,10 @@ def get_model_checkpoint(model_name, target_file=None, download_dir_type='user_c
 
 
 def get_imagenet_mappings():
+    """
+    Fetches a dictionary of class id to description mappings from github
+    :return: imagenet class mapping dictionary
+    """
     with open(maybe_download(IMAGENET_MAPPINGS_URL), 'r') as f:
         return ast.literal_eval(f.read())
 
