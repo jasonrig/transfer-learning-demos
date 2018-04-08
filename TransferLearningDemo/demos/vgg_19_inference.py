@@ -13,13 +13,11 @@ IMG_SIZE = (224, 224)
 with graph.as_default():
     IMG_MEAN = tf.reshape(tf.constant(IMAGENET_MEAN), (1, 1, 3))
 
-
     def decode_and_resize_img(img_bytes):
         img_decoded = tf.image.decode_image(img_bytes)
         img_decoded.set_shape((None, None, 3))
         img_resized = tf.image.resize_images([img_decoded], IMG_SIZE)
         return tf.squeeze(img_resized)
-
 
     input_image_files = tf.placeholder(tf.string, (None,))
     input_images = tf.map_fn(lambda file_name: tf.read_file(file_name), input_image_files)
