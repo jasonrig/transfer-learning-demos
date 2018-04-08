@@ -1,3 +1,4 @@
+import ast
 import logging
 import os
 import re
@@ -14,6 +15,7 @@ APP_AUTHOR = "jasonrig"
 APP_NAME = "transfer-learning-demo"
 SLIM_README_URL = "https://raw.githubusercontent.com/tensorflow/models/master/research/slim/README.md"
 SLIM_MODEL_BASE_URL = "https://github.com/tensorflow/models/blob/master/research/slim/nets/"
+IMAGENET_MAPPINGS_URL = "https://gist.githubusercontent.com/yrevar/942d3a0ac09ec9e5eb3a/raw/c2c91c8e767d04621020c30ed31192724b863041/imagenet1000_clsid_to_human.txt"
 
 logger = logging.getLogger(__name__)
 
@@ -152,6 +154,11 @@ def get_model_checkpoint(model_name, target_file=None, download_dir_type='user_c
     return ckpt_destination
 
 
+def get_imagenet_mappings():
+    with open(maybe_download(IMAGENET_MAPPINGS_URL), 'r') as f:
+        return ast.literal_eval(f.read())
+
+
 def maybe_download(url, destination_dir=None, target_file_name=None, invalidate_cache=False):
     """
     Downloads a file from the given URL or returns a cached version
@@ -161,7 +168,7 @@ def maybe_download(url, destination_dir=None, target_file_name=None, invalidate_
     :return: path to the downloaded file
     """
     destination_dir = destination_dir or get_dirs()['user_cache_dir']
-    target_file_name = target_file_name or target_file_name.split("/")[-1]
+    target_file_name = target_file_name or url.split("/")[-1]
     file_path = os.path.join(destination_dir, target_file_name)
 
     if invalidate_cache:
