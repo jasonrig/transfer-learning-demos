@@ -124,7 +124,7 @@ def get_model_checkpoint(model_name, target_file=None, download_dir_type='user_c
     logger.warning("No pretrained parameters were found on disk. Attempting to download from %s" % model_url)
     destination_dir = dirs[download_dir_type]
     ckpt_destination = os.path.join(destination_dir, target_file)
-    tar_destination = maybe_download(model_url, destination_dir, source_file)
+    tar_destination = download(model_url, destination_dir, source_file)
 
     assert os.path.isfile(tar_destination), "Expected %s to exist but could not be found" % tar_destination
 
@@ -159,11 +159,11 @@ def get_imagenet_mappings():
     Fetches a dictionary of class id to description mappings from github
     :return: imagenet class mapping dictionary
     """
-    with open(maybe_download(_IMAGENET_MAPPINGS_URL), 'r') as f:
+    with open(download(_IMAGENET_MAPPINGS_URL), 'r') as f:
         return ast.literal_eval(f.read())
 
 
-def maybe_download(url, destination_dir=None, target_file_name=None, invalidate_cache=False):
+def download(url, destination_dir=None, target_file_name=None, invalidate_cache=False):
     """
     Downloads a file from the given URL or returns a cached version
     :param url: URL from which to download the file
