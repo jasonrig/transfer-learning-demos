@@ -1,3 +1,5 @@
+import importlib.util
+
 from setuptools import setup, find_packages
 
 setup(
@@ -16,3 +18,9 @@ setup(
         'beautifulsoup4>=4.6.0,<4.7.0'
     ]
 )
+
+# Check if TensorFlow is available
+tf = importlib.util.find_spec("tensorflow")
+if tf is None:
+    print("Warning: A working TensorFlow installation is required but none could be found.")
+    print("Please run `pip install tensorflow` or `pip install tensorflow-gpu` before using this package.")
