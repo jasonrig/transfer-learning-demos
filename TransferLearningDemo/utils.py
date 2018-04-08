@@ -11,11 +11,11 @@ import requests
 from appdirs import AppDirs
 from bs4 import BeautifulSoup as Soup
 
-APP_AUTHOR = "jasonrig"
-APP_NAME = "transfer-learning-demo"
-SLIM_README_URL = "https://raw.githubusercontent.com/tensorflow/models/master/research/slim/README.md"
-SLIM_MODEL_BASE_URL = "https://github.com/tensorflow/models/blob/master/research/slim/nets/"
-IMAGENET_MAPPINGS_URL = "https://gist.githubusercontent.com/yrevar/942d3a0ac09ec9e5eb3a/raw/c2c91c8e767d04621020c30ed31192724b863041/imagenet1000_clsid_to_human.txt"
+from TransferLearningDemo import APP_NAME, APP_AUTHOR
+
+_SLIM_README_URL = "https://raw.githubusercontent.com/tensorflow/models/master/research/slim/README.md"
+_SLIM_MODEL_BASE_URL = "https://github.com/tensorflow/models/blob/master/research/slim/nets/"
+_IMAGENET_MAPPINGS_URL = "https://gist.githubusercontent.com/yrevar/942d3a0ac09ec9e5eb3a/raw/c2c91c8e767d04621020c30ed31192724b863041/imagenet1000_clsid_to_human.txt"
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +59,7 @@ def pretrained_model_urls():
     def _get_model_name_and_url(row):
         links = row.find_all('a')
         cells = row.find_all('td')
-        has_link_to_model_source = any(map(lambda l: l.get('href').startswith(SLIM_MODEL_BASE_URL), links))
+        has_link_to_model_source = any(map(lambda l: l.get('href').startswith(_SLIM_MODEL_BASE_URL), links))
 
         if not has_link_to_model_source or len(cells) == 0:
             return None
@@ -75,7 +75,7 @@ def pretrained_model_urls():
 
         return re.sub(r'[^A-Za-z0-9._\-\s]', '', cells[0].text), link_to_tgz[0]
 
-    readme_markdown = requests.get(SLIM_README_URL).text
+    readme_markdown = requests.get(_SLIM_README_URL).text
     readme_html = markdown.markdown(readme_markdown, extensions=['markdown.extensions.tables'])
     soup = Soup(readme_html, 'html.parser')
     table_rows = soup.find_all('tr')
@@ -159,7 +159,7 @@ def get_imagenet_mappings():
     Fetches a dictionary of class id to description mappings from github
     :return: imagenet class mapping dictionary
     """
-    with open(maybe_download(IMAGENET_MAPPINGS_URL), 'r') as f:
+    with open(maybe_download(_IMAGENET_MAPPINGS_URL), 'r') as f:
         return ast.literal_eval(f.read())
 
 
