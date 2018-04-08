@@ -1,4 +1,0 @@
-[submodule "models"]
-	path = TransferLearningDemo/models
-	url = https://github.com/tensorflow/models.git
-	branch = master
