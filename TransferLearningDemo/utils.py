@@ -107,7 +107,7 @@ def maybe_download_pretrained_model(model_name, target_file=None, download_dir_t
 
     source_file = model_url.split("/")[-1]
     if target_file is None:
-        target_file = re.sub(r'(\.tar\.gz)|(\.tgz)$', '.ckpt', source_file)
+        target_file = "%s.ckpt" % re.sub(r'(\.tar\.gz)|(\.tgz)$', '', source_file)
 
     logger.debug("Looking for %s on disk..." % target_file)
 
