@@ -114,8 +114,8 @@ def train(epochs, style_img, content_img, weight=0.9, yield_every=1):
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
-        style_img = download("https://upload.wikimedia.org/wikipedia/en/1/1c/Pablo_Picasso%2C_1910%2C_Girl_with_a_Mandolin_%28Fanny_Tellier%29%2C_oil_on_canvas%2C_100.3_x_73.6_cm%2C_Museum_of_Modern_Art_New_York..jpg")
-        content_img = download("https://www.monash.edu/__data/assets/image/0010/1021798/DF0_7344.JPG")
+        style_img = download("https://github.com/jasonrig/transfer-learning-demos/raw/master/style.jpg")
+        content_img = download("https://github.com/jasonrig/transfer-learning-demos/raw/master/content.jpg")
     else:
         style_img = sys.argv[1]
         content_img = sys.argv[2]
