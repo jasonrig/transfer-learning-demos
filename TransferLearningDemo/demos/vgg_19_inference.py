@@ -25,6 +25,7 @@ with graph.as_default():
     input_normalised = input_decoded - IMG_MEAN
 
     output = vgg.vgg_19(input_normalised, is_training=False)
+    scores = tf.nn.softmax(output[0])
 
     saver = tf.train.Saver()
 
@@ -34,15 +35,15 @@ def run_network(image_urls):
 
     with tf.Session(graph=graph) as sess:
         saver.restore(sess, get_model_checkpoint("VGG 19"))
-        result = sess.run(output, feed_dict={input_image_files: img_files})
-        return result
+        result = sess.run([scores, output], feed_dict={input_image_files: img_files})
+        return {'probabilities': result[0], 'output': result[1]}
 
 
 def decode_result(result):
-    class_ids = np.argmax(result[0], axis=1)
-    scores = np.max(result[0], axis=1)
+    class_ids = np.argmax(result['probabilities'], axis=1)
+    probabilities = np.max(result['probabilities'], axis=1) * 100
     class_labels = [IMAGENET_MAPPINGS[id] for id in class_ids]
-    return zip(class_ids, scores, class_labels)
+    return zip(class_ids, probabilities, class_labels)
 
 
 def do_inference(image_urls):

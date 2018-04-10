@@ -2,7 +2,7 @@ from collections import OrderedDict
 
 from TransferLearningDemo.utils import get_imagenet_mappings
 
-IMAGENET_MEAN = [123.68, 116.78, 103.94]  # RGB image means
+IMAGENET_MEAN = [123.68, 116.779, 103.939]  # RGB image means
 IMAGENET_MAPPINGS = get_imagenet_mappings()
 SAMPLE_IMAGES = OrderedDict((
     ("dog", "https://c1.staticflickr.com/9/8083/8299709853_fc69615369_b_d.jpg"),
