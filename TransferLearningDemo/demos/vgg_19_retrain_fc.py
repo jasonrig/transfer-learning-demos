@@ -78,8 +78,8 @@ def input_fn(test=False, batch_size=100, epochs=1):
 def input_fn_predict(file_names):
     def _input_fn():
         def decode_img(file_content):
-            img = tf.image.resize_images([tf.image.decode_image(file_content)], (224,224))
-            img.set_shape((1,224,224,3))
+            img = tf.image.decode_jpeg(file_content)
+            img = tf.image.resize_images([img], (224,224))
             return img
 
         dataset = tf.data.Dataset.from_tensor_slices(tf.constant(file_names, tf.string))
