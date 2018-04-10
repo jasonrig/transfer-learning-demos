@@ -99,7 +99,8 @@ def input_fn_predict(file_names):
 
 def model_fn(features, labels, mode):
     img_mean = tf.reshape(tf.constant(IMAGENET_MEAN), (1, 1, 3))
-    output = vgg.vgg_19(tf.cast(features, tf.float32) - img_mean, is_training=(mode == tf.estimator.ModeKeys.TRAIN))
+    img = tf.cast(features, tf.float32)
+    output = vgg.vgg_19(img - img_mean, is_training=(mode == tf.estimator.ModeKeys.TRAIN))
     logits = tf.layers.dense(tf.layers.flatten(output[1]['vgg_19/fc7']), 2, activation=None, name="new_logits")
 
     probabilities = tf.nn.softmax(logits)

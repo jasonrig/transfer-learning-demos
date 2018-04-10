@@ -41,7 +41,6 @@ def generate_graph(conv_layer=(1, 1), filter_idx=0, lr=0.01, graph=None):
             'graph': graph,
             'test_img': test_img,
             'init_fn': init_fn,
-            'saver': saver,
             'train_op': train_op,
             'loss': loss
         }
