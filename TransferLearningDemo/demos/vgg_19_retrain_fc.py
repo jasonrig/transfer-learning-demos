@@ -12,8 +12,10 @@ from tensorflow.python.estimator.warm_starting_util import WarmStartSettings
 from TransferLearningDemo.demos import IMAGENET_MEAN
 from TransferLearningDemo.utils import download, get_dirs, delete_file_safely, get_model_checkpoint
 
+
 TF_RECORDS_FILE_TRAIN = os.path.join(get_dirs()['user_cache_dir'], 'smiles_train.tfrecords')
 TF_RECORDS_FILE_TEST = os.path.join(get_dirs()['user_cache_dir'], 'smiles_test.tfrecords')
+
 
 if not os.path.isfile(TF_RECORDS_FILE_TRAIN) or not os.path.isfile(TF_RECORDS_FILE_TEST):
     non_smiles = download(
@@ -58,9 +60,10 @@ if not os.path.isfile(TF_RECORDS_FILE_TRAIN) or not os.path.isfile(TF_RECORDS_FI
         raise
 
 
-def input_fn(test=False, batch_size=100):
+def input_fn(test=False, batch_size=100, epochs=1):
     def _input_fn():
         dataset = tf.data.TFRecordDataset(TF_RECORDS_FILE_TEST if test else TF_RECORDS_FILE_TRAIN)
+        dataset = dataset.repeat(epochs)
         if not test:
             dataset = dataset.shuffle(100)
         dataset = dataset.map(lambda example: tf.parse_single_example(example, features={
@@ -86,11 +89,15 @@ def model_fn(features, labels, mode):
     train_op = None
     if mode == tf.estimator.ModeKeys.TRAIN:
         with tf.variable_scope('', reuse=tf.AUTO_REUSE):
+            train_vars = [
+                tf.get_variable('new_logits/kernel'),
+                tf.get_variable('new_logits/bias')
+            ]
+            train_vars.extend([var for var in tf.trainable_variables() if
+                               var.name.startswith('vgg_19/fc') and not var.name.startswith != "vgg_19/fc8"])
+            print(train_vars)
             train_op = tf.train.AdamOptimizer(learning_rate=0.005).minimize(
-                loss, global_step=tf.train.get_or_create_global_step(), var_list=[
-                    tf.get_variable('new_logits/kernel'),
-                    tf.get_variable('new_logits/bias')
-                ])
+                loss, global_step=tf.train.get_or_create_global_step(), var_list=train_vars)
 
     metrics = None
     if mode == tf.estimator.ModeKeys.EVAL:
@@ -125,4 +132,5 @@ estimator = tf.estimator.Estimator(model_fn, warm_start_from=ws, model_dir=model
 
 if __name__ == "__main__":
     tf.logging.set_verbosity(tf.logging.INFO)
-    estimator.train(input_fn(test=False, batch_size=10))
+    estimator.train(input_fn(test=False, batch_size=10, epochs=10))
+    print(estimator.evaluate(input_fn(test=True, batch_size=10, epochs=1)))
