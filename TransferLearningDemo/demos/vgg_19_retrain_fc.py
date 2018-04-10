@@ -93,11 +93,16 @@ def model_fn(features, labels, mode):
     img_mean = tf.reshape(tf.constant(IMAGENET_MEAN), (1, 1, 3))
     output = vgg.vgg_19(tf.cast(features, tf.float32) - img_mean, is_training=(mode == tf.estimator.ModeKeys.TRAIN))
     logits = tf.layers.dense(tf.layers.flatten(output[1]['vgg_19/fc7']), 2, activation=None, name="new_logits")
-    loss = tf.losses.softmax_cross_entropy(labels, logits)
+
     probabilities = tf.nn.softmax(logits)
     predicted_classes = tf.argmax(probabilities, axis=1)
 
+    loss = None
     train_op = None
+
+    if mode in [tf.estimator.ModeKeys.TRAIN, tf.estimator.ModeKeys.EVAL]:
+        loss = tf.losses.softmax_cross_entropy(labels, logits)
+
     if mode == tf.estimator.ModeKeys.TRAIN:
         with tf.variable_scope('', reuse=tf.AUTO_REUSE):
             train_vars = [
