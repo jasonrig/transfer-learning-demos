@@ -60,8 +60,10 @@ def input_fn(test=False, batch_size=100, epochs=1):
         def augment(img):
             img = tf.image.random_flip_left_right(img)
             img = tf.image.random_flip_up_down(img)
-            img = tf.image.random_brightness(img, max_delta=63)
-            img = tf.image.random_contrast(img, lower=0.2, upper=1.8)
+            rnd_crop_x = tf.random_uniform([], 200, 224, dtype=tf.int32)
+            rnd_crop_y = tf.random_uniform([], 200, 224, dtype=tf.int32)
+            img = tf.random_crop(img, (rnd_crop_x, rnd_crop_y, 3))
+            img = tf.squeeze(tf.image.resize_images([img], (224, 224)))
             return img
         dataset = tf.data.TFRecordDataset(TF_RECORDS_FILE_TEST if test else TF_RECORDS_FILE_TRAIN)
         dataset = dataset.repeat(epochs)
