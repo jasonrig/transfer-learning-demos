@@ -12,10 +12,8 @@ from tensorflow.python.estimator.warm_starting_util import WarmStartSettings
 from TransferLearningDemo.demos import IMAGENET_MEAN
 from TransferLearningDemo.utils import download, get_dirs, delete_file_safely, get_model_checkpoint
 
-
 TF_RECORDS_FILE_TRAIN = os.path.join(get_dirs()['user_cache_dir'], 'retina_train.tfrecords')
 TF_RECORDS_FILE_TEST = os.path.join(get_dirs()['user_cache_dir'], 'retina_test.tfrecords')
-
 
 if not os.path.isfile(TF_RECORDS_FILE_TRAIN) or not os.path.isfile(TF_RECORDS_FILE_TEST):
     annotations = download("http://cecas.clemson.edu/~ahoover/stare/manifestations/annotations.zip")
@@ -26,9 +24,10 @@ if not os.path.isfile(TF_RECORDS_FILE_TRAIN) or not os.path.isfile(TF_RECORDS_FI
             with zipfile.ZipFile(annotations) as annotations_file_archive:
                 imgs = image_file_archive.namelist()
                 random.shuffle(imgs)
-                train_imgs = imgs[:-50]
-                test_imgs = imgs[-50:]
-                for TF_RECORDS_FILE, img_files in [(TF_RECORDS_FILE_TRAIN, train_imgs), (TF_RECORDS_FILE_TEST, test_imgs)]:
+                train_imgs = imgs[:-75]
+                test_imgs = imgs[-75:]
+                for TF_RECORDS_FILE, img_files in [(TF_RECORDS_FILE_TRAIN, train_imgs),
+                                                   (TF_RECORDS_FILE_TEST, test_imgs)]:
                     with tf.python_io.TFRecordWriter(TF_RECORDS_FILE) as writer:
                         for file_name in img_files:
                             annotation_txt_file = "%s.fea.mg.txt" % file_name.split("/")[-1].split('.')[0]
@@ -36,9 +35,9 @@ if not os.path.isfile(TF_RECORDS_FILE_TRAIN) or not os.path.isfile(TF_RECORDS_FI
                                 with annotations_file_archive.open(annotation_txt_file) as annotation_txt:
                                     label = annotation_txt.read().decode('ascii')[11] == "1"
                                     if label:
-                                        label = np.array([1,0])
+                                        label = np.array([1, 0])
                                     else:
-                                        label = np.array([0,1])
+                                        label = np.array([0, 1])
                                 with image_file_archive.open(file_name) as image_file:
                                     img = np.array(Image.open(image_file).resize((224, 224))).reshape((224 * 224 * 3))
                                     example = tf.train.Example(features=tf.train.Features(
@@ -67,6 +66,9 @@ def input_fn(test=False, batch_size=100, epochs=1):
             'label': tf.FixedLenFeature((2,), tf.int64)
         }))
         dataset = dataset.map(lambda example: (tf.reshape(example['image'], (224, 224, 3)), example['label']))
+        if not test:
+            dataset = dataset.map(
+                lambda img, label: (tf.image.random_flip_up_down(tf.image.random_flip_left_right(img)), label))
         dataset = dataset.batch(batch_size)
         return dataset.make_one_shot_iterator().get_next()
 
@@ -127,5 +129,5 @@ estimator = tf.estimator.Estimator(model_fn, warm_start_from=ws, model_dir=model
 
 if __name__ == "__main__":
     tf.logging.set_verbosity(tf.logging.INFO)
-    estimator.train(input_fn(test=False, batch_size=10, epochs=10))
-    print(estimator.evaluate(input_fn(test=True, batch_size=10, epochs=1)))
+    estimator.train(input_fn(test=False, batch_size=100, epochs=100))
+    print(estimator.evaluate(input_fn(test=True, batch_size=100, epochs=1)))
