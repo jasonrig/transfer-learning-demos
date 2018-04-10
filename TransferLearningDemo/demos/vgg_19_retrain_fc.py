@@ -9,6 +9,7 @@ from PIL import Image
 from tensorflow.contrib.slim.python.slim.nets import vgg
 from tensorflow.python.estimator.warm_starting_util import WarmStartSettings
 
+from TransferLearningDemo.demos import IMAGENET_MEAN
 from TransferLearningDemo.utils import download, get_dirs, delete_file_safely, get_model_checkpoint
 
 TF_RECORDS_FILE_TRAIN = os.path.join(get_dirs()['user_cache_dir'], 'smiles_train.tfrecords')
@@ -75,7 +76,8 @@ def input_fn(test=False, batch_size=100):
 
 
 def model_fn(features, labels, mode):
-    output = vgg.vgg_19(features, is_training=(mode == tf.estimator.ModeKeys.TRAIN))
+    img_mean = tf.reshape(tf.constant(IMAGENET_MEAN), (1, 1, 3))
+    output = vgg.vgg_19(features - img_mean, is_training=(mode == tf.estimator.ModeKeys.TRAIN))
     logits = tf.layers.dense(tf.layers.flatten(output[1]['vgg_19/fc7']), 2, activation=None, name="new_logits")
     loss = tf.losses.softmax_cross_entropy(labels, logits)
     probabilities = tf.nn.softmax(logits)
@@ -122,4 +124,5 @@ if not os.path.isdir(model_dir):
 estimator = tf.estimator.Estimator(model_fn, warm_start_from=ws, model_dir=model_dir)
 
 if __name__ == "__main__":
-    estimator.train(input_fn(batch_size=10))
+    tf.logging.set_verbosity(tf.logging.INFO)
+    estimator.train(input_fn(test=False, batch_size=10))
