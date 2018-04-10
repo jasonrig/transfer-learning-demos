@@ -57,6 +57,12 @@ if not os.path.isfile(TF_RECORDS_FILE_TRAIN) or not os.path.isfile(TF_RECORDS_FI
 
 def input_fn(test=False, batch_size=100, epochs=1):
     def _input_fn():
+        def augment(img):
+            img = tf.image.random_flip_left_right(img)
+            img = tf.image.random_flip_up_down(img)
+            img = tf.image.random_brightness(img, max_delta=63)
+            img = tf.image.random_contrast(img, lower=0.2, upper=1.8)
+            return img
         dataset = tf.data.TFRecordDataset(TF_RECORDS_FILE_TEST if test else TF_RECORDS_FILE_TRAIN)
         dataset = dataset.repeat(epochs)
         if not test:
@@ -68,7 +74,7 @@ def input_fn(test=False, batch_size=100, epochs=1):
         dataset = dataset.map(lambda example: (tf.reshape(example['image'], (224, 224, 3)), example['label']))
         if not test:
             dataset = dataset.map(
-                lambda img, label: (tf.image.random_flip_up_down(tf.image.random_flip_left_right(img)), label))
+                lambda img, label: (augment(img), label))
         dataset = dataset.batch(batch_size)
         return dataset.make_one_shot_iterator().get_next()
 
@@ -112,7 +118,7 @@ def model_fn(features, labels, mode):
             train_vars.extend([var for var in tf.trainable_variables() if
                                var.name.startswith('vgg_19/fc') and not var.name.startswith != "vgg_19/fc8"])
             print(train_vars)
-            train_op = tf.train.AdamOptimizer(learning_rate=0.005).minimize(
+            train_op = tf.train.AdamOptimizer(learning_rate=0.001).minimize(
                 loss, global_step=tf.train.get_or_create_global_step(), var_list=train_vars)
 
     metrics = None
