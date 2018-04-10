@@ -118,7 +118,7 @@ def model_fn(features, labels, mode):
                 tf.get_variable('new_logits/bias')
             ]
             train_vars.extend([var for var in tf.trainable_variables() if
-                               var.name.startswith('vgg_19/fc') and not var.name.startswith != "vgg_19/fc8"])
+                               var.name.startswith('vgg_19/fc') and not var.name.startswith("vgg_19/fc8")])
             print(train_vars)
             train_op = tf.train.AdamOptimizer(learning_rate=0.001).minimize(
                 loss, global_step=tf.train.get_or_create_global_step(), var_list=train_vars)
