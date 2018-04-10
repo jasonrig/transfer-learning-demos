@@ -1,6 +1,6 @@
 import os
 import random
-import re
+import sys
 import zipfile
 
 import numpy as np
@@ -75,6 +75,15 @@ def input_fn(test=False, batch_size=100, epochs=1):
     return _input_fn
 
 
+def input_fn_predict(file_names):
+    def _input_fn():
+        dataset = tf.data.Dataset.from_tensor_slices(tf.constant(file_names, tf.string))
+        dataset = dataset.map(lambda file_name: tf.read_file(file_name))
+        dataset = dataset.map(lambda file_content: tf.image.resize_images([tf.image.decode_image(file_content)], (224,224)))
+        return dataset.make_one_shot_iterator().get_next()
+    return _input_fn
+
+
 def model_fn(features, labels, mode):
     img_mean = tf.reshape(tf.constant(IMAGENET_MEAN), (1, 1, 3))
     output = vgg.vgg_19(tf.cast(features, tf.float32) - img_mean, is_training=(mode == tf.estimator.ModeKeys.TRAIN))
@@ -129,5 +138,17 @@ estimator = tf.estimator.Estimator(model_fn, warm_start_from=ws, model_dir=model
 
 if __name__ == "__main__":
     tf.logging.set_verbosity(tf.logging.INFO)
-    estimator.train(input_fn(test=False, batch_size=100, epochs=100))
-    print(estimator.evaluate(input_fn(test=True, batch_size=100, epochs=1)))
+    if len(sys.argv) == 1:
+        print("Arguments must be one of:")
+        print("train")
+        print("evaluate")
+        print("predict <file names>")
+    elif sys.argv[1] == 'train':
+        estimator.train(input_fn(test=False, batch_size=100, epochs=100))
+        print(estimator.evaluate(input_fn(test=True, batch_size=100, epochs=1)))
+    elif sys.argv[1] == 'evaluate':
+        print(estimator.evaluate(input_fn(test=True, batch_size=100, epochs=1)))
+    elif len(sys.argv) > 2 and sys.argv[1] == 'predict':
+        print(list(estimator.predict(input_fn_predict(sys.argv[2:]))))
+    else:
+        print("Invalid options selected")
