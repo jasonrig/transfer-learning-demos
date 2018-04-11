@@ -27,6 +27,8 @@ with graph.as_default():
     output = vgg.vgg_19(input_normalised, is_training=False)
     scores = tf.nn.softmax(output[0])
 
+    print("Trainable parameters: %i" % int(np.sum([np.prod(v.shape) for v in tf.trainable_variables()])))
+
     saver = tf.train.Saver()
 
 
